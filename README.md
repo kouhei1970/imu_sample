@@ -1,4 +1,4 @@
-# imu_test
+# imu_sample
 Raspberry Pi Pico で LSM9DS1 を SPIでアクセスするサンプル
 のバージョン２です。（バージョン２はimu_test）
 
