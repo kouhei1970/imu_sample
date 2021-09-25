@@ -19,6 +19,218 @@
 
 #include "lsm9ds1_reg.h"
 
+
+
+
+/*チップセレクトの関数を追加*/
+inline static void cs_select(uint16_t cs_pin) {
+    //printf("cspin=%d\n",cs_pin);
+    asm volatile("nop \n nop \n nop");
+    gpio_put(cs_pin, 0);  // Active low
+    asm volatile("nop \n nop \n nop");
+}
+
+inline static void cs_deselect(uint16_t cs_pin) {
+    asm volatile("nop \n nop \n nop");
+    gpio_put(cs_pin, 1);
+    asm volatile("nop \n nop \n nop");
+}
+
+/*
+ * @brief  Write generic imu register (platform dependent)
+ *
+ * @param  handle    customizable argument. In this examples is used in
+ *                   order to select the correct sensor bus handler.
+ * @param  reg       register to write
+ * @param  bufp      pointer to data to write in register reg
+ * @param  len       number of consecutive register to write
+ *
+ */
+
+int32_t platform_write_imu(void *handle, uint8_t reg, 
+                                  const uint8_t *bufp, uint16_t len)
+{
+  sensbus_t *sensbus = (sensbus_t *)handle;
+
+  //HAL_GPIO_WritePin(sensbus->cs_port, sensbus->cs_pin, GPIO_PIN_RESET);
+  //HAL_SPI_Transmit(sensbus->hbus, &reg, 1, 1000);
+  //HAL_SPI_Transmit(sensbus->hbus, (uint8_t*) bufp, len, 1000);
+  //HAL_GPIO_WritePin(sensbus->cs_port, sensbus->cs_pin, GPIO_PIN_SET);
+
+  cs_select(sensbus->cs_pin);
+  spi_write_blocking(/*sensbus->hbus*/spi0, &reg, 1);
+  spi_write_blocking(/*sensbus->hbus*/spi0, (uint8_t*) bufp, len);
+  cs_deselect(sensbus->cs_pin);
+  return 0;
+
+}
+
+
+/*
+ * @brief  Write generic magnetometer register (platform dependent)
+ *
+ * @param  handle    customizable argument. In this examples is used in
+ *                   order to select the correct sensor bus handler.
+ * @param  reg       register to write
+ * @param  bufp      pointer to data to write in register reg
+ * @param  len       number of consecutive register to write
+ *
+ */
+int32_t platform_write_mag(void *handle, uint8_t reg,
+                                  const uint8_t *bufp, uint16_t len)
+{
+  sensbus_t *sensbus = (sensbus_t *)handle;
+  /* Write multiple command */
+
+  reg |= 0x40;
+  //HAL_GPIO_WritePin(sensbus->cs_port, sensbus->cs_pin, GPIO_PIN_RESET);
+  //HAL_SPI_Transmit(sensbus->hbus, &reg, 1, 1000);
+  //HAL_SPI_Transmit(sensbus->hbus, (uint8_t*) bufp, len, 1000);
+  //HAL_GPIO_WritePin(sensbus->cs_port, sensbus->cs_pin, GPIO_PIN_SET);
+  //return 0;
+
+  cs_select(sensbus->cs_pin);
+  spi_write_blocking(/*sensbus->hbus*/spi0, &reg, 1);
+  spi_write_blocking(/*sensbus->hbus*/spi0, (uint8_t*) bufp, len);
+  cs_deselect(sensbus->cs_pin);
+  return 0;
+}
+
+/*
+ * @brief  Read generic imu register (platform dependent)
+ *
+ * @param  handle    customizable argument. In this examples is used in
+ *                   order to select the correct sensor bus handler.
+ * @param  reg       register to read
+ * @param  bufp      pointer to buffer that store the data read
+ * @param  len       number of consecutive register to read
+ *
+ */
+int32_t platform_read_imu(void *handle, uint8_t reg,
+                                 uint8_t *bufp, uint16_t len)
+{
+  sensbus_t *sensbus = (sensbus_t *)handle;
+
+  /* Read command */
+  //reg |= 0x80;
+  //HAL_GPIO_WritePin(sensbus->cs_port, sensbus->cs_pin, GPIO_PIN_RESET);
+  //HAL_SPI_Transmit(sensbus->hbus, &reg, 1, 1000);
+  //HAL_SPI_Receive(sensbus->hbus, bufp, len, 1000);
+  //HAL_GPIO_WritePin(sensbus->cs_port, sensbus->cs_pin, GPIO_PIN_SET);
+  //return 0;
+
+  reg |= 0x80;
+  cs_select(sensbus->cs_pin);
+  spi_write_blocking(/*sensbus->hbus*/spi0, &reg, 1);
+  spi_read_blocking(/*sensbus->hbus*/spi0, 0, bufp, len);
+  cs_deselect(sensbus->cs_pin);
+  return 0;
+
+}
+
+/*
+ * @brief  Read generic magnetometer register (platform dependent)
+ *
+ * @param  handle    customizable argument. In this examples is used in
+ *                   order to select the correct sensor bus handler.
+ * @param  reg       register to read
+ * @param  bufp      pointer to buffer that store the data read
+ * @param  len       number of consecutive register to read
+ *
+ */
+int32_t platform_read_mag(void *handle, uint8_t reg,
+                                 uint8_t *bufp, uint16_t len)
+{
+  sensbus_t *sensbus = (sensbus_t *)handle;
+
+  /* Read multiple command */
+  //reg |= 0xC0;
+  //HAL_GPIO_WritePin(sensbus->cs_port, sensbus->cs_pin, GPIO_PIN_RESET);
+  //HAL_SPI_Transmit(sensbus->hbus, &reg, 1, 1000);
+  //HAL_SPI_Receive(sensbus->hbus, bufp, len, 1000);
+  //HAL_GPIO_WritePin(sensbus->cs_port, sensbus->cs_pin, GPIO_PIN_SET);
+  //return 0;
+
+  reg |= 0xC0;
+  cs_select(sensbus->cs_pin);
+  spi_write_blocking(/*sensbus->hbus*/spi0, &reg, 1);
+  spi_read_blocking(/*sensbus->hbus*/spi0, 0, bufp, len);
+  cs_deselect(sensbus->cs_pin);
+  return 0;
+
+}
+
+/*
+ * @brief  Send buffer to console (platform dependent)
+ *
+ * @param  tx_buffer     buffer to transmit
+ * @param  len           number of byte to send
+ *
+ */
+void tx_com(uint8_t *tx_buffer, uint16_t len)
+{
+  //CDC_Transmit_FS(tx_buffer, len);
+  printf("%s",tx_buffer);
+}
+
+/*
+ * @brief  platform specific delay (platform dependent)
+ *
+ * @param  ms        delay in ms
+ *
+ */
+void platform_delay(uint32_t ms)
+{
+  sleep_ms(ms);
+}
+
+/*
+ * @brief  platform specific initialization (platform dependent)
+ */
+void platform_init( sensbus_t *imu_bus,
+                    sensbus_t *mag_bus,
+                    stmdev_ctx_t *dev_ctx_imu, 
+                    stmdev_ctx_t *dev_ctx_mag,
+                    uint32_t freq,
+                    uint8_t pin_miso,
+                    uint8_t pin_sck,
+                    uint8_t pin_mosi,
+                    uint8_t pin_csag,
+                    uint8_t pin_csm )
+{
+ /* Make Handle */ 
+ // imu_bus.hbus = spibus;
+ // mag_bus.hbus = spibus;
+ // imu_bus.cs_pin = pin_csag; 
+ // mag_bus.cs_pin = pin_csm;
+  
+  /* Initialize inertial sensors (IMU) driver interface */
+  dev_ctx_imu->write_reg = platform_write_imu;
+  dev_ctx_imu->read_reg = platform_read_imu;
+  dev_ctx_imu->handle = (void *)imu_bus;
+  /* Initialize magnetic sensors driver interface */
+  dev_ctx_mag->write_reg = platform_write_mag;
+  dev_ctx_mag->read_reg = platform_read_mag;
+  dev_ctx_mag->handle = (void *)mag_bus;
+  // This example will use SPI0 or SPI1 at 0.5MHz.
+  spi_init(imu_bus->hbus, freq);
+  spi_init(mag_bus->hbus, freq);
+  gpio_set_function(pin_miso, GPIO_FUNC_SPI);
+  gpio_set_function(pin_sck, GPIO_FUNC_SPI);
+  gpio_set_function(pin_mosi, GPIO_FUNC_SPI);
+
+  // Chip select is active-low, so we'll initialise it to a driven-high state
+  gpio_init(pin_csag);
+  gpio_init(pin_csm);
+  gpio_set_dir(pin_csag, GPIO_OUT);
+  gpio_set_dir(pin_csm, GPIO_OUT);
+  gpio_put(pin_csag, 1);
+  gpio_put(pin_csm, 1);
+  sleep_ms(1000);
+
+}
+
+
 /**
   * @defgroup    LSM9DS1
   * @brief       This file provides a set of functions needed to drive the
@@ -4745,9 +4957,10 @@ int32_t lsm9ds1_mag_self_test_get(stmdev_ctx_t *ctx, uint8_t *val)
   return ret;
 }
 
+/************************ (C) COPYRIGHT STMicroelectronics ********/
+
 /**
   * @}
   *
   */
 
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

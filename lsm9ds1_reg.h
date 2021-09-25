@@ -27,9 +27,13 @@ extern "C" {
 #endif
 
 /* Includes ------------------------------------------------------------------*/
+#include <stdio.h>
 #include <stdint.h>
 #include <stddef.h>
 #include <math.h>
+#include "pico/stdlib.h"
+#include "pico/binary_info.h"
+#include "hardware/spi.h"
 
 /** @addtogroup LSM9DS1
   * @{
@@ -1626,6 +1630,63 @@ int32_t lsm9ds1_gy_self_test_get(stmdev_ctx_t *ctx, uint8_t *val);
 
 int32_t lsm9ds1_mag_self_test_set(stmdev_ctx_t *ctx, uint8_t val);
 int32_t lsm9ds1_mag_self_test_get(stmdev_ctx_t *ctx, uint8_t *val);
+
+
+/** follow kouhei added **
+/* Define communication interface */
+
+/* Private macro -------------------------------------------------------------*/
+#define BOOT_TIME 20 //ms
+//#define PIN_CSAG  1
+//#define PIN_MISO  4
+//#define PIN_CSM   5
+//#define PIN_SCK   6
+//#define PIN_MOSI  7
+
+typedef struct {
+  spi_inst_t   *hbus;
+  uint16_t cs_pin;
+} sensbus_t;
+
+
+
+
+/* Private functions ---------------------------------------------------------*/
+/*
+ *   WARNING:
+ *   Functions declare in this section are defined at the end of this file
+ *   and are strictly related to the hardware platform used.
+ *
+ */
+
+int32_t platform_write_imu(void *handle, uint8_t reg,
+                                  const uint8_t *bufp, uint16_t len);
+int32_t platform_read_imu(void *handle, uint8_t reg,
+                                 uint8_t *bufp, uint16_t len);
+int32_t platform_write_mag(void *handle, uint8_t reg,
+                                  const uint8_t *bufp, uint16_t len);
+int32_t platform_read_mag(void *handle, uint8_t reg,
+                                 uint8_t *bufp, uint16_t len);
+void tx_com( uint8_t *tx_buffer, uint16_t len );
+void platform_delay(uint32_t ms);
+//void platform_init(void);
+void platform_init( 
+                    sensbus_t *imu_bus,
+                    sensbus_t *mag_bus,
+                    stmdev_ctx_t *dev_ctx_imu, 
+                    stmdev_ctx_t *dev_ctx_mag,
+                    uint32_t freq,
+                    uint8_t pin_miso,
+                    uint8_t pin_sck,
+                    uint8_t pin_mosi,
+                    uint8_t pin_csag,
+                    uint8_t pin_csm );
+
+/*付け加えた*/
+//inline void cs_select(uint16_t cs_pin);
+//inline void cs_deselect(uint16_t cs_pin);
+
+
 /**
   *@}
   *
